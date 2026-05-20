@@ -20,9 +20,9 @@ class Grids {
 
     for (let i = 0; i < 2; i++) {
       this.pixels[i] = [];
-      for (let j = 0; j < 5; j++) {
+      for (let j = 0; j < 7; j++) {
         this.pixels[i][j] = [];
-        for (let k = 0; k < 7; k++) {
+        for (let k = 0; k < 5; k++) {
           this.pixels[i][j][k] = 0;
         }
       }
@@ -31,11 +31,11 @@ class Grids {
 
   renderPixel(i, j, k, val) {
     const center = this.canvasSize / 2;
-    const a = center - (2 * PIXEL_GAP) - (2.5 * PIXEL_SIZE);
-    const b = center - (0.5 * GRID_GAP) - (7 * PIXEL_SIZE) - (6 * PIXEL_GAP) - (0.5 * PIXEL_SIZE);
+    const a = center - (2 * PIXEL_GAP) - (3.5 * PIXEL_SIZE);
+    const b = center - (0.5 * GRID_GAP) - (5 * PIXEL_SIZE) - (4 * PIXEL_GAP) - (0.5 * PIXEL_SIZE);
 
     const x = 0.5 * PIXEL_SIZE + 
-      (0 === i ? 0 : (7 * PIXEL_SIZE + 6 * PIXEL_GAP + GRID_GAP)) +
+      (0 === i ? 0 : (5 * PIXEL_SIZE + 4 * PIXEL_GAP + GRID_GAP)) +
       k * PIXEL_SIZE + 
       k * PIXEL_GAP +
       b;
@@ -62,13 +62,13 @@ class Grids {
     }
     for (let i = 0; i < 2; i++) {
       const r = buffer[i];
-      if (r.length !== 5) {
-        throw new Error(`Grid ${i} doesn't have 5 columns`);
+      if (r.length !== 7) {
+        throw new Error(`Grid ${i} doesn't have 7 columns`);
       }
-      for (let j = 0; j < 5; j++) {
+      for (let j = 0; j < 7; j++) {
         const c = r[j];
-        if (c.length !== 7) {
-          throw new Error(`Grid ${i}, row ${j} doesn't have 7 rows`);
+        if (c.length !== 5) {
+          throw new Error(`Grid ${i}, row ${j} doesn't have 5 rows`);
         }
       }
     }
@@ -76,8 +76,8 @@ class Grids {
     const promises = [];
 
     for (let i = 0; i < 2; i++) {
-      for (let j = 0; j < 5; j++) {
-        for (let k = 0; k < 7; k++) {
+      for (let j = 0; j < 7; j++) {
+        for (let k = 0; k < 5; k++) {
           const p = this.pixels[i][j][k];
           const b = buffer[i][j][k];
           if (p !== b) {
@@ -95,6 +95,16 @@ class Grids {
 
   _rgbaFromArray(array) {
     return `rgba(${array[0]},${array[1]},${array[2]},${array[3]})`;
+  }
+
+  clearBuffer(buffer) {
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < 7; j++) {
+        for (let k = 0; k < 5; k++) {
+          buffer[i][j][k] = 0;
+        }
+      }
+    }
   }
 }
 

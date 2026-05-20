@@ -55,6 +55,7 @@ class Wheel {
   
   async renderBuffer(buffer) {
     if (buffer.length !== this.pixels.length) {
+      console.log(buffer);
       throw new Error('Invalid buffer length');
     }
 
@@ -80,6 +81,12 @@ class Wheel {
 
   _rgbaFromArray(array) {
     return `rgba(${array[0]},${array[1]},${array[2]},${array[3]}`;
+  }
+
+  clearBuffer(buffer) {
+    for (let i = 0; i < this.pixels.length; i++) {
+      buffer[i] = this.backgroundColor;
+    }
   }
 }
 
