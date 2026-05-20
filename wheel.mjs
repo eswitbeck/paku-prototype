@@ -3,6 +3,7 @@ const PIXEL_SIZE = 18;
 const RADIUS_PROPORTION = 0.6;
 
 class Wheel {
+  // some mutability risks I haven't thought about
   constructor(canvas, backgroundColor) {
     this.backgroundColor = backgroundColor;
     this.canvasSize = Math.min(canvas.width, canvas.height);
@@ -15,9 +16,6 @@ class Wheel {
     for (let i = 0; i < PIXEL_COUNT; i++) {
       this.pixels[i] = backgroundColor;
     }
-    this.renderBuffer(new Array(PIXEL_COUNT)
-      .fill([0,255,255,1]));
-     // .fill(backgroundColor));
   }
 
   renderPixel(index, arr) {
@@ -65,6 +63,7 @@ class Wheel {
       if (!this._pixelEq(buffer[i], this.pixels[i])) {
         promises[i] = Promise.resolve().then(() => {
           this.renderPixel(i, buffer[i]);
+          // mutability risk
           this.pixels[i] = buffer[i];
         });
       }

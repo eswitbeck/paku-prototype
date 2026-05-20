@@ -1,24 +1,10 @@
 import Wheel from  './wheel.mjs';
-
-const addElement = (parent, type, options) => {
-  switch (type) {
-    case 'text':
-      {
-        const el = document.createElement('text');
-        el.textContent = options?.body ?? '';
-        parent.appendChild(el);
-      }
-    default:
-      {
-        const el = document.createElement(type);
-        parent.appendChild(el);
-      }
-  };
-}
+import Grids from './grids.mjs';
 
 const init = () => {
   const canvas = document.querySelector('#canvas');
   const w = new Wheel(canvas, [1,1,1,1]);
+  const g = new Grids(canvas, [1,1,1,1]);
 }
 
 document.addEventListener('DOMContentLoaded', (e) => {
