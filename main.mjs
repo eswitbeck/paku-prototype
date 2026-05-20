@@ -1,12 +1,9 @@
 import Wheel from  './wheel.mjs';
 import Grids from './grids.mjs';
+import Game from './game.mjs';
 
-const drawPaku = (buffer, frame, i) => {
-  buffer[i] = [255,255,0,1];
-  if (0 == frame % 25) {
-    return true;
-  }
-  return false;
+const wipeInputBuffer = (buffer) => {
+  buffer.direction = null;
 }
 
 const init = async () => {
@@ -31,13 +28,36 @@ const init = async () => {
 
     return b;
   });
+  const inputBuffers = [0,0].map(() => ({
+    direction: null
+  }));
+  let [activeInputBuffer, inactiveInputBuffer] = inputBuffers;
 
   const FPS = 60;
   const msPerFrame = 1000 / FPS;
 
   let nextFrameTime = performance.now();
   const readOnlyFrameRef = [0];
-  let i = 0;
+
+  window.addEventListener('keydown', (e) => {
+    const k = e.key;
+    const frameNum = readOnlyFrameRef[0];
+
+    switch (k) {
+      case 'ArrowLeft':
+        {
+          activeInputBuffer.direction = 'l';
+        }
+        break;
+      case 'ArrowRight':
+        {
+          activeInputBuffer.direction = 'r';
+        }
+        break;
+    }
+  });
+
+  const game = new Game();
   while (true) {
     const now = performance.now();
     if (now < nextFrameTime) {
@@ -54,12 +74,18 @@ const init = async () => {
     w.clearBuffer(wB);
     g.clearBuffer(gB);
 
-    // game logic from previously set interaction state
-    // draws to activeBuffer
-    if (drawPaku(wB, frameNum, i)) i = ++i % 16;
+    const b = activeInputBuffer;
+    [activeInputBuffer, inactiveInputBuffer] =
+      [inactiveInputBuffer, activeInputBuffer];
+    wipeInputBuffer(activeInputBuffer);
+
+    game.updateState(frameNum, b);
+    game.drawWheel(wB);
+    game.drawGrid(gB);
 
     w.renderBuffer(wB);
     g.renderBuffer(gB);
+
     readOnlyFrameRef[0] = (1 + frameNum) % FPS;
 
     nextFrameTime += msPerFrame;
