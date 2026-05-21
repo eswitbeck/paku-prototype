@@ -1,7 +1,84 @@
 import previewFrames from './previewFrames.mjs';
 
-class Game {
+const SPECIAL_PIP_DIST_FROM_PAKU = 3;
+
+class Paku {
+  framesPerMove = 5;
+  location = 4;
+  direction = 0;
+  directionIntent = null;
+  static color = [255,255,0,1];
+  static intentToDir = { 'l': -1, 'r': 1 };
+
+  update(frameNum, inputBuffer) {
+    if (null !== inputBuffer.direction) {
+      this.directionIntent = inputBuffer.direction;
+    }
+
+    if (0 === frameNum % this.framesPerMove) {
+      if (null !== this.directionIntent) {
+        this.direction = Paku.intentToDir[this.directionIntent] || 0;
+      }
+      this.location = (this.location + this.direction + 16) % 16;
+    }
+  }
+
+  drawWheel(wheelBuffer) {
+    // TODO super paku?
+    wheelBuffer[this.location] = Paku.color;
+  }
 }
+
+class Game {
+  // TODO move paku/ghost to new locations to account for animations?
+  ghostLocation = 12;
+  pips = new Array(16).fill(true);
+  specialPipLocation;
+  score = 0;
+  
+  constructor() {
+    this.paku = new Paku();
+  }
+
+  setSpecialPip() {
+    const range = 16 - (2 * SPECIAL_PIP_DIST_FROM_PAKU);
+    const loc = Math.round(Math.random() * range) + this.paku.location;
+    this.specialPipLocation = loc % 16;
+
+  }
+
+  update(frameNum, inputBuffer) {
+    this.paku.update(frameNum, inputBuffer);
+    if (this.pips[this.paku.location]) {
+      this.score++;
+      this.pips[this.paku.location] = false;
+      // if special pip
+    }
+
+    // reset pips
+    if (this.pips.every(p => !p)) {
+      for (let i = this.paku.location + 1; i < this.paku.location + 14; i++) {
+        this.pips[i % 16] = true;
+      }
+      this.setSpecialPip();
+    }
+
+    return null;
+  }
+
+  drawWheel(wheelBuffer) {
+    for (let i = 0; i < 16; i++) {
+      if (this.pips[i]) {
+        wheelBuffer[i] = [255,255,255,1];
+      }
+    }
+    this.paku.drawWheel(wheelBuffer);
+  }
+
+  drawGrid(gridBuffer) {
+  }
+}
+
 class Preview {
   dir = 0;
   loggedInputDir = null;
@@ -44,7 +121,6 @@ class Preview {
     const color = pos > 0 ? [0,255,0,1] : [0,0,255,1];
      
     const f = previewFrames[this.animFrame];
-    console.log(f);
     for (let i = 0; i < f.length; i++) {
       wheelBuffer[i] = f[i];
     }
@@ -72,8 +148,8 @@ class GameState {
   }
 
   changeMode(mode) {
-    const cl = modes[mode];
-    this.modeObj = new cl();
+    const Cl = modes[mode];
+    this.modeObj = new Cl();
   }
 
   handleInput(frameNum, inputState) {
