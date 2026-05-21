@@ -39,6 +39,8 @@ const init = async () => {
   let nextFrameTime = performance.now();
   const readOnlyFrameRef = [0];
 
+  const game = new Game();
+
   window.addEventListener('keydown', (e) => {
     const k = e.key;
     const frameNum = readOnlyFrameRef[0];
@@ -57,7 +59,6 @@ const init = async () => {
     }
   });
 
-  const game = new Game();
   while (true) {
     const now = performance.now();
     if (now < nextFrameTime) {
@@ -79,9 +80,12 @@ const init = async () => {
       [inactiveInputBuffer, activeInputBuffer];
     wipeInputBuffer(activeInputBuffer);
 
-    game.updateState(frameNum, b);
+    const shouldChangeMode = game.handleInput(frameNum, b);
     game.drawWheel(wB);
     game.drawGrid(gB);
+    if (null !== shouldChangeMode) {
+      game.changeMode(shouldChangeMode);
+    }
 
     w.renderBuffer(wB);
     g.renderBuffer(gB);

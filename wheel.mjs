@@ -21,7 +21,7 @@ class Wheel {
   renderPixel(index, arr) {
     const center = this.canvasSize / 2;
 
-    const angle = (Math.PI * 2 * index) / PIXEL_COUNT;
+    const angle = (Math.PI * 2 * index) / PIXEL_COUNT - (Math.PI / 2);
 
     const x = center + Math.cos(angle) * this.radius;
     const y = center + Math.sin(angle) * this.radius;

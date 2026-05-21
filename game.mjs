@@ -1,72 +1,92 @@
+import previewFrames from './previewFrames.mjs';
+
 class Game {
-  pakuLocation = 0;
-  pakuDirection = 0;
+}
+class Preview {
+  dir = 0;
+  loggedInputDir = null;
 
-  ghostLocation = 0;
+  animFrame = 0;
 
-  pakuColor = [255, 255, 0, 1];
-  ghostColor = [255, 0, 0, 1];
+  static update = {
+      'r': 1,
+      'l': -1
+  };
 
-  ghostFramesPerMove = 17;
-  pakuFramesPerMove = 20;
-
-  dead = 0; // 0 = alive, 1 = render last frame, 2 = dead 
-
-  updateState(frameNum, inputState) {
-    if (2 === this.dead) return;
-
-    if (0 === frameNum % this.ghostFramesPerMove &&
-      1 !== this.dead
-    ) {
-      this.ghostLocation = (this.ghostLocation + 1) % 16;
-    }
-    
-    const dir = {
-      'l': -1,
-      'r': 1
-    }[ inputState.direction ] || 0;
-
-    if (dir !== 0) {
-      this.pakuDirection = dir;
+  update(frameNum, inputBuffer) {
+    // this import is dumb and silly
+    this.animFrame = (this.animFrame + 1) % previewFrames.length;
+    if (null !== inputBuffer.direction) {
+      this.loggedInputDir = inputBuffer.direction;
     }
 
-    if (0 === frameNum % this.pakuFramesPerMove &&
-      1 !== this.dead
-    ) {
-      this.pakuLocation = (this.pakuLocation + (this.pakuDirection + 16)) % 16;
+    if (0 === (frameNum % 5)) {
+      this.dir += Preview.update[this.loggedInputDir] || 0;
+      this.loggedInputDir = null;
+      console.log(this.dir);
     }
 
-    if (1 === this.dead) {
-      this.dead = 2;
-    } else if (this.pakuLocation === this.ghostLocation) {
-      this.dead = 1;
+    if (17 === this.dir) {
+      return 'game';
+    } else if (-17 === this.dir) {
+      return 'highscore';
+    } else {
+      return null;
     }
-  }
-
-  drawWheel(wheelBuffer) {
-    if (2 === this.dead) {
-      for (let i = 0; i < 16; i++) {
-        wheelBuffer[i] = [255, 0, 0, 1];
-      }
-      return;
-    }
-
-    wheelBuffer[this.pakuLocation] = this.pakuColor;
-    wheelBuffer[this.ghostLocation] = this.ghostColor;
   }
 
   drawGrid(gridBuffer) {
-    if (this.dead > 0) {
-      // needs ascii or somethign utils
-      for (let i = 0; i < 2; i++) {
-        for (let j = 0; j < 7; j++) {
-          for (let k = 0; k < 5; k++) {
-            gridBuffer[i][j][k] = 1;
-          }
-        }
-      }
+  }
+
+  drawWheel(wheelBuffer) {
+    // TODO flat buffer with direct write ins
+    const pos = this.dir > 0;
+    const color = pos > 0 ? [0,255,0,1] : [0,0,255,1];
+     
+    const f = previewFrames[this.animFrame];
+    console.log(f);
+    for (let i = 0; i < f.length; i++) {
+      wheelBuffer[i] = f[i];
+    }
+
+    for (let i = 0; i < Math.min(16, Math.abs(this.dir)); i++) {
+      wheelBuffer[(i * Math.sign(this.dir) + 16) % 16] = color;
     }
   }
 }
+class HighScore {
+}
 
-export default Game;
+const modes = {
+  'preview': Preview,
+  'game': Game,
+  'highscore': HighScore
+}
+
+class GameState {
+  mode = 'preview';
+  modeObj;
+
+  constructor () {
+    this.changeMode(this.mode);
+  }
+
+  changeMode(mode) {
+    const cl = modes[mode];
+    this.modeObj = new cl();
+  }
+
+  handleInput(frameNum, inputState) {
+    return this.modeObj.update(frameNum, inputState);
+  }
+
+  drawWheel(wheelBuffer) {
+    this.modeObj.drawWheel(wheelBuffer);
+  }
+
+  drawGrid(gridBuffer) {
+    this.modeObj.drawGrid(gridBuffer);
+  }
+}
+
+export default GameState;
