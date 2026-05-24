@@ -9,13 +9,6 @@ class Grids {
     this.ctx = canvas.getContext("2d");
     this.ctx.imageSmoothingEnabled = false;
 
-    /**
-     * ....... .......
-     * ....... .......
-     * ....... .......
-     * ....... .......
-     * ....... .......
-     */
     this.pixels = [];
 
     for (let i = 0; i < 2; i++) {
@@ -32,17 +25,21 @@ class Grids {
   renderPixel(i, j, k, val) {
     const center = this.canvasSize / 2;
     const a = center - (2 * PIXEL_GAP) - (3.5 * PIXEL_SIZE);
-    const b = center - (0.5 * GRID_GAP) - (5 * PIXEL_SIZE) - (4 * PIXEL_GAP) - (0.5 * PIXEL_SIZE);
+    const b = center
+			- (0.5 * GRID_GAP)
+			- (5 * PIXEL_SIZE)
+			- (4 * PIXEL_GAP)
+			- (0.5 * PIXEL_SIZE);
 
     const x = 0.5 * PIXEL_SIZE + 
+      j * PIXEL_SIZE +
+      j * PIXEL_GAP +
+      a;
+    const y = 0.5 * PIXEL_SIZE + 
       (0 === i ? 0 : (5 * PIXEL_SIZE + 4 * PIXEL_GAP + GRID_GAP)) +
       k * PIXEL_SIZE + 
       k * PIXEL_GAP +
       b;
-    const y = 0.5 * PIXEL_SIZE + 
-      j * PIXEL_SIZE +
-      j * PIXEL_GAP +
-      a;
 
     this.ctx.fillStyle = 1 === val
       ? "white"
@@ -102,6 +99,31 @@ class Grids {
       for (let j = 0; j < 7; j++) {
         for (let k = 0; k < 5; k++) {
           buffer[i][j][k] = 0;
+        }
+      }
+    }
+  }
+
+  static drawGlyph(
+    gridBuffer,
+    row,
+    glyph,
+    offset = 0
+  ) {
+    const lines = glyph.split("\n");
+    const height = lines.length;
+    const width = lines.reduce(
+      (a, b) => Math.max(a, b.length),
+      0
+    );
+
+    for (let i = offset; i < Math.min(width + offset, 7); i++) {
+      for (let j = 0; j < Math.min(height, 5); j++) {
+        const k = i - offset;
+        if ('*' === lines[j][k]) {
+          gridBuffer[row][i][j] = 1;
+        } else {
+          gridBuffer[row][i][j] = 0;
         }
       }
     }

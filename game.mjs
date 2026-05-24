@@ -1,4 +1,5 @@
 import previewFrames from './previewFrames.mjs';
+import Grids from './grids.mjs';
 
 const SPECIAL_PIP_DIST_FROM_PAKU = 3;
 
@@ -225,6 +226,8 @@ class Game {
       this.ghost.difficulty += 1;
     }
 
+    console.log(this.score);
+
     return null;
   }
 
@@ -250,6 +253,7 @@ class Game {
 class Preview {
   dir = 0;
   loggedInputDir = null;
+  offset = 0;
 
   animFrame = 0;
 
@@ -268,6 +272,7 @@ class Preview {
     if (0 === (frameNum % 5)) {
       this.dir += Preview.update[this.loggedInputDir] || 0;
       this.loggedInputDir = null;
+      this.offset = (this.offset + 1) % 7;
     }
 
     if (17 === this.dir) {
@@ -280,6 +285,31 @@ class Preview {
   }
 
   drawGrid(gridBuffer) {
+    // TODO
+    const e = 
+`***
+*
+***
+*
+***`;
+    const a = 
+` *
+***
+* *
+***
+* *`;
+    Grids.drawGlyph(
+      gridBuffer,
+      0,
+      e,
+      this.offset
+    );
+    Grids.drawGlyph(
+      gridBuffer,
+      1,
+      a,
+      (this.offset + 5) % 7
+    );
   }
 
   drawWheel(wheelBuffer) {
