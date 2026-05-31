@@ -1,3 +1,5 @@
+import glyphs from './glyphs.mjs';
+
 const PIXEL_SIZE = 10;
 const PIXEL_GAP = 2;
 const GRID_GAP = 8;
@@ -120,12 +122,33 @@ class Grids {
     for (let i = offset; i < Math.min(width + offset, 7); i++) {
       for (let j = 0; j < Math.min(height, 5); j++) {
         const k = i - offset;
+        if (i < 0) continue;
         if ('*' === lines[j][k]) {
           gridBuffer[row][i][j] = 1;
         } else {
           gridBuffer[row][i][j] = 0;
         }
       }
+    }
+  }
+
+  static drawNumber(
+    gridBuffer,
+    row,
+    num,
+    offset
+  ) {
+    const digits = `${num}`.split('').map(n => glyphs[n]);
+
+    // by default, right align, trimming upper numbers
+    for(let i = 0; i < digits.length; i++) {
+      const indivOffset = offset + 4 + (-4 * (digits.length - i - 1));
+      Grids.drawGlyph(
+        gridBuffer,
+        row,
+        digits[i],
+        indivOffset
+      );
     }
   }
 }

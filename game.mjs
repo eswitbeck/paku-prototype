@@ -160,6 +160,8 @@ class Game {
   specialPipLocation;
   score = 0;
   over = false;
+  scoreOffset = 0;
+  maxScoreOffset = 0;
   
   constructor() {
     this.paku = new Paku();
@@ -186,6 +188,10 @@ class Game {
   }
 
   update(frameNum, inputBuffer) {
+    // handle score sliding
+    if (this.maxScoreOffset > 0) {
+    }
+
     if (this.over) {
       // play animation then head to poss high score setting
       return null;
@@ -226,8 +232,6 @@ class Game {
       this.ghost.difficulty += 1;
     }
 
-    console.log(this.score);
-
     return null;
   }
 
@@ -247,13 +251,20 @@ class Game {
   }
 
   drawGrid(gridBuffer) {
+    const digits = Math.ceil(Math.log10(this.score));
+    this.maxScoreOffset = Math.abs(Math.min(0, 2 - digits)) * 4;
+    Grids.drawNumber(
+      gridBuffer,
+      0,
+      this.score,
+      this.scoreOffset
+    );
   }
 }
 
 class Preview {
   dir = 0;
   loggedInputDir = null;
-  offset = 0;
 
   animFrame = 0;
 
@@ -272,7 +283,6 @@ class Preview {
     if (0 === (frameNum % 5)) {
       this.dir += Preview.update[this.loggedInputDir] || 0;
       this.loggedInputDir = null;
-      this.offset = (this.offset + 1) % 7;
     }
 
     if (17 === this.dir) {
@@ -285,31 +295,6 @@ class Preview {
   }
 
   drawGrid(gridBuffer) {
-    // TODO
-    const e = 
-`***
-*
-***
-*
-***`;
-    const a = 
-` *
-***
-* *
-***
-* *`;
-    Grids.drawGlyph(
-      gridBuffer,
-      0,
-      e,
-      this.offset
-    );
-    Grids.drawGlyph(
-      gridBuffer,
-      1,
-      a,
-      (this.offset + 5) % 7
-    );
   }
 
   drawWheel(wheelBuffer) {
