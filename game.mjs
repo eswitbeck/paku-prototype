@@ -26,24 +26,22 @@ class Ghost {
 
   update(frameNum, pakuLocation) {
     this.updateStateTimers();
-    this.checkPaku(pakuLocation);
+    this.checkPaku(frameNum,pakuLocation);
     if (0 === Math.floor(frameNum % this.getFramesPerMove())) {
-      this.location = (this.location + this.direction + 16) % 16;
+      const next = (this.location + this.direction);
+      this.location = this.direction < 0
+        ? Math.max(1, next)
+        : Math.min(15, next);
     }
   }
 
   // dedup?
   die() {
     this.state = 'dead';
-    this.deadTimer = 16 * 12;
-    this.seesPaku = false;
   }
 
   weak() {
     this.state = 'weak';
-    if (this.seesPaku) {
-      this.seesPaku = false;
-    }
     this.weakTimer = 12 * 12;
   }
 
@@ -53,10 +51,6 @@ class Ghost {
     if ('weak' === this.state) {
       speed /= Ghost.weakSpeedMod;
     } else if ('alive' === this.state) {
-      if (this.seesPaku) {
-        speed /= Ghost.seesPakuSpeedMod;
-      }
-
       speed -= 0.35 * this.difficulty;
     }
 
@@ -71,42 +65,18 @@ class Ghost {
           this.state = 'alive';
         }
         break;
-      case 'dead':
-        if (--this.deadTimer === 0) {
-          this.state = 'alive';
-        }
-        break;
     }
   }
 
   checkPaku(frameNum, pakuLocation) {
     if (0 === Math.floor(frameNum % this.getFramesPerMove())) {
-
-      const aheadDist = (pakuLocation - this.location + 16) % 16;
-      const behindDist = (this.location - pakuLocation + 16) % 16;
-
-      const pakuAhead = aheadDist > 0 && aheadDist <= this.visionDepth;
-      const pakuBehind = behindDist > 0 && behindDist <= this.visionDepth;
-
-      if (pakuAhead || pakuBehind) {
-        if (!this.seesPaku) {
-          this.seesPaku = true;
-        }
-
-        // turn to face if alive; run if dead
-        // otherwise wander
-        if (
-          (this.direction < 0 && pakuAhead && 'alive' === this.state) ||
-          (this.direction < 0 && pakuBehind && 'weak' === this.state)
-        ) {
-          this.direction = 1;
-        } else if (
-          (this.direction > 0 && pakuBehind && 'alive' === this.state) ||
-          (this.direction > 0 && pakuAhead && 'weak' === this.state)
-        ) {
-          this.direction = -1;
-        }
+      if ('dead' === this.state) {
+        const highEdgeClosest = this.location > 8;
+        this.direction = highEdgeClosest ? 1 : -1;
+        return;
       }
+      const pakuPositive = Math.sign(pakuLocation - this.location);
+      this.direction = (('weak' === this.state) ? -1 : 1) * pakuPositive;
     }
   }
 
@@ -155,7 +125,7 @@ class Paku {
 
 class Game {
   // TODO move paku/ghost to new locations to account for animations?
-  ghostLocation = 12;
+  ghostLocation = 14;
   pips = new Array(16).fill(true);
   specialPipLocation;
   score = 0;
@@ -166,6 +136,8 @@ class Game {
   constructor() {
     this.paku = new Paku();
     this.ghost = new Ghost();
+    this.pips[0] = false; // warp pipe
+    this.setSpecialPip();
   }
 
   setSpecialPip() {
@@ -198,15 +170,15 @@ class Game {
     }
 
     this.paku.update(frameNum, inputBuffer);
-
-    this.ghost.update(frameNum);
+    this.ghost.update(frameNum, this.paku.location);
 
     if (this.pips[this.paku.location]) {
-      this.score++;
       this.pips[this.paku.location] = false;
       if (this.paku.location === this.specialPipLocation) {
         if ('alive' === this.ghost.state) {
           this.ghost.weak();
+          this.score++;
+
         }
       }
     }
@@ -218,15 +190,16 @@ class Game {
           break;
         case 'weak':
           this.ghost.die();
-          this.score += 50;
           break;
       }
     }
 
     // reset pips
     if (this.pips.every(p => !p)) {
-      for (let i = this.paku.location + 1; i < this.paku.location + 14; i++) {
-        this.pips[i % 16] = true;
+      for (let i = this.paku.location; i < this.paku.location + 16; i++) {
+        if ((i % 16) !== 0) {
+          this.pips[i % 16] = true;
+        }
       }
       this.setSpecialPip();
       this.ghost.difficulty += 1;
