@@ -4,6 +4,7 @@ import Game from './game.mjs';
 
 const wipeInputBuffer = (buffer) => {
   buffer.direction = null;
+  buffer.override = false;
 }
 
 const init = async () => {
@@ -29,7 +30,8 @@ const init = async () => {
     return b;
   });
   const inputBuffers = [0,0].map(() => ({
-    direction: null
+    direction: null,
+    override: false,
   }));
   let [activeInputBuffer, inactiveInputBuffer] = inputBuffers;
 
@@ -45,6 +47,10 @@ const init = async () => {
     const k = e.key;
     const frameNum = readOnlyFrameRef[0];
 
+    if (['ArrowLeft', 'ArrowRight', ' '].includes(k)) {
+      e.preventDefault();
+    }
+
     switch (k) {
       case 'ArrowLeft':
         {
@@ -54,6 +60,12 @@ const init = async () => {
       case 'ArrowRight':
         {
           activeInputBuffer.direction = 'r';
+        }
+        break;
+
+      case ' ':
+        {
+          activeInputBuffer.override = true;
         }
         break;
     }

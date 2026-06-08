@@ -10,21 +10,32 @@ class Ghost {
   static weakSpeedMod = 0.7;
   static seesPakuSpeedMod = 1.2;
 
-  framesPerMove = 12;
-  location = 12;
+  static initFramesPerMove = 14;
+  framesPerMove;
+  location = 14;
   direction = 1;
   state = 'alive'; // alive | weak | dead
-  visionDepth = 5;
   
   deadAnimFrame = 0;
-  seesPaku = false;
 
   deadTimer = 0;
   weakTimer = 0;
 
   difficulty = 0;
 
+  regenPoint;
+
+  constructor() {
+    this.framesPerMove = Ghost.initFramesPerMove;
+    console.log(this.framesPerMove);
+  }
+
   update(frameNum, pakuLocation) {
+    if ('dead' === this.state &&
+      this.location === this.regenPoint
+    ) {
+      this.state = 'alive';
+    }
     this.updateStateTimers();
     this.checkPaku(frameNum,pakuLocation);
     if (0 === Math.floor(frameNum % this.getFramesPerMove())) {
@@ -38,11 +49,12 @@ class Ghost {
   // dedup?
   die() {
     this.state = 'dead';
+    this.regenPoint = this.location > 8 ? 1 : 15;
   }
 
   weak() {
     this.state = 'weak';
-    this.weakTimer = 12 * 12;
+    this.weakTimer = 12 * Ghost.initFramesPerMove;
   }
 
   getFramesPerMove() {
@@ -98,9 +110,9 @@ class Ghost {
 }
 
 class Paku {
-  framesPerMove = 14;
+  framesPerMove = 16;
   location = 4;
-  direction = 0;
+  direction = 1;
   directionIntent = null;
   static color = [255,255,0,1];
   static intentToDir = { 'l': -1, 'r': 1 };
@@ -166,6 +178,7 @@ class Game {
 
     if (this.over) {
       // play animation then head to poss high score setting
+      return 'preview';
       return null;
     }
 
@@ -247,6 +260,9 @@ class Preview {
   };
 
   update(frameNum, inputBuffer) {
+    if (inputBuffer.override) {
+      return 'game';
+    }
     // this import is dumb and silly
     this.animFrame = (this.animFrame + 1) % previewFrames.length;
     if (null !== inputBuffer.direction) {
