@@ -7,10 +7,10 @@ class Ghost {
   static color = [255,0,0,1];
   static weakColor = [0,0,255,1];
 
-  static weakSpeedMod = 0.7;
-  static seesPakuSpeedMod = 1.2;
+  static weakSpeedMod = 0.75;
+  static deadSpeedMod = 1.25;
 
-  static initFramesPerMove = 14;
+  static initFramesPerMove = 15;
   framesPerMove;
   location = 14;
   direction = 1;
@@ -27,7 +27,6 @@ class Ghost {
 
   constructor() {
     this.framesPerMove = Ghost.initFramesPerMove;
-    console.log(this.framesPerMove);
   }
 
   update(frameNum, pakuLocation) {
@@ -50,6 +49,7 @@ class Ghost {
   die() {
     this.state = 'dead';
     this.regenPoint = this.location > 8 ? 1 : 15;
+    this.direction = 1 === this.regenPoint ? -1 : 1;
   }
 
   weak() {
@@ -64,6 +64,8 @@ class Ghost {
       speed /= Ghost.weakSpeedMod;
     } else if ('alive' === this.state) {
       speed -= 0.35 * this.difficulty;
+    } else if ('dead' === this.state) {
+      speed /= Ghost.deadSpeedMod;
     }
 
     return speed;
@@ -82,13 +84,10 @@ class Ghost {
 
   checkPaku(frameNum, pakuLocation) {
     if (0 === Math.floor(frameNum % this.getFramesPerMove())) {
-      if ('dead' === this.state) {
-        const highEdgeClosest = this.location > 8;
-        this.direction = highEdgeClosest ? 1 : -1;
-        return;
+      if ('dead' !== this.state) {
+        const pakuPositive = Math.sign(pakuLocation - this.location);
+        this.direction = (('weak' === this.state) ? -1 : 1) * pakuPositive;
       }
-      const pakuPositive = Math.sign(pakuLocation - this.location);
-      this.direction = (('weak' === this.state) ? -1 : 1) * pakuPositive;
     }
   }
 
@@ -190,9 +189,8 @@ class Game {
       if (this.paku.location === this.specialPipLocation) {
         if ('alive' === this.ghost.state) {
           this.ghost.weak();
-          this.score++;
-
         }
+        this.score++;
       }
     }
 
