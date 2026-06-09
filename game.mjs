@@ -3,6 +3,36 @@ import Grids from './grids.mjs';
 
 const SPECIAL_PIP_DIST_FROM_PAKU = 3;
 
+class GameEnd {
+  framesPerTick = 15;
+  frameCountDown = 10;
+  flashOn = false;
+
+  update(frameNum) {
+    if (0 === Math.floor(frameNum % this.framesPerTick)) {
+      this.flashOn = !this.flashOn;
+      return --this.frameCountDown > 0;
+    }
+    return true;
+  }
+
+  drawGrid(gridBuffer) {
+  }
+
+  // TODO -- why is there that extra pip?
+  drawWheel(wheelBuffer, paku, ghost) {
+    if (this.flashOn) {
+      for (let i = 0; i < 16; i++) {
+        // TODO less allocation
+        wheelBuffer[i] = [255, 140, 0, 1];
+        paku.drawWheel(wheelBuffer);
+        return;
+      }
+    }
+    ghost.drawWheel(wheelBuffer);
+  }
+}
+
 class Ghost {
   static color = [255,0,0,1];
   static weakColor = [0,0,255,1];
@@ -63,7 +93,7 @@ class Ghost {
     if ('weak' === this.state) {
       speed /= Ghost.weakSpeedMod;
     } else if ('alive' === this.state) {
-      speed -= 0.35 * this.difficulty;
+      speed -= 0.15 * this.difficulty;
     } else if ('dead' === this.state) {
       speed /= Ghost.deadSpeedMod;
     }
@@ -143,6 +173,8 @@ class Game {
   over = false;
   scoreOffset = 0;
   maxScoreOffset = 0;
+
+  animation = null;
   
   constructor() {
     this.paku = new Paku();
@@ -177,8 +209,15 @@ class Game {
 
     if (this.over) {
       // play animation then head to poss high score setting
-      return 'preview';
-      return null;
+      if (null === this.animation) {
+        this.animation = new GameEnd();
+        return null;
+      } else {
+        if (this.animation.update(frameNum)) {
+          return null;
+        }
+        return 'preview';
+      }
     }
 
     this.paku.update(frameNum, inputBuffer);
@@ -220,6 +259,14 @@ class Game {
   }
 
   drawWheel(wheelBuffer) {
+    if (null !== this.animation) {
+      return this.animation.drawWheel(
+        wheelBuffer,
+        this.paku,
+        this.ghost
+      );
+    }
+
     for (let i = 0; i < 16; i++) {
       if (this.pips[i]) {
         if (i === this.specialPipLocation) {
@@ -235,6 +282,9 @@ class Game {
   }
 
   drawGrid(gridBuffer) {
+    if (null !== this.animation) {
+      return this.animation.drawGrid(gridBuffer);
+    }
     const digits = Math.ceil(Math.log10(this.score));
     this.maxScoreOffset = Math.abs(Math.min(0, 2 - digits)) * 4;
     Grids.drawNumber(
