@@ -16,18 +16,27 @@ class GameEnd {
     return true;
   }
 
-  drawGrid(gridBuffer) {
+  drawGrid(gridBuffer, score, offset) {
+    if (this.flashOn) {
+      const digits = Math.ceil(Math.log10(this.score));
+      this.maxScoreOffset = Math.abs(Math.min(0, 2 - digits)) * 4;
+      Grids.drawNumber(
+        gridBuffer,
+        0,
+        score,
+        offset
+      );
+    }
   }
 
-  // TODO -- why is there that extra pip?
   drawWheel(wheelBuffer, paku, ghost) {
     if (this.flashOn) {
       for (let i = 0; i < 16; i++) {
         // TODO less allocation
         wheelBuffer[i] = [255, 140, 0, 1];
         paku.drawWheel(wheelBuffer);
-        return;
       }
+      return;
     }
     ghost.drawWheel(wheelBuffer);
   }
@@ -282,11 +291,18 @@ class Game {
   }
 
   drawGrid(gridBuffer) {
-    if (null !== this.animation) {
-      return this.animation.drawGrid(gridBuffer);
-    }
     const digits = Math.ceil(Math.log10(this.score));
     this.maxScoreOffset = Math.abs(Math.min(0, 2 - digits)) * 4;
+
+    if (null !== this.animation) {
+      // TODO might need dispatch on which anim
+      return this.animation.drawGrid(
+        gridBuffer,
+        this.score,
+        this.scoreOffset
+      );
+    }
+
     Grids.drawNumber(
       gridBuffer,
       0,
