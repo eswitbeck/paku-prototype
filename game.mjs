@@ -49,7 +49,7 @@ class Ghost {
   static weakSpeedMod = 0.75;
   static deadSpeedMod = 1.25;
 
-  static initFramesPerMove = 15;
+  static initFramesPerMove = 13;
   framesPerMove;
   location = 14;
   direction = 1;
@@ -60,12 +60,13 @@ class Ghost {
   deadTimer = 0;
   weakTimer = 0;
 
-  difficulty = 0;
+  difficulty = 1;
 
   regenPoint;
 
   constructor() {
     this.framesPerMove = Ghost.initFramesPerMove;
+    this.startTime = Date.now();
   }
 
   update(frameNum, pakuLocation) {
@@ -82,6 +83,11 @@ class Ghost {
         ? Math.max(1, next)
         : Math.min(15, next);
     }
+    
+    const minsTranspired = Math.floor(
+      (Date.now() - this.startTime) / 1000 / 60
+    );
+    this.difficulty = 1 + minsTranspired * 0.75;
   }
 
   // dedup?
@@ -102,7 +108,7 @@ class Ghost {
     if ('weak' === this.state) {
       speed /= Ghost.weakSpeedMod;
     } else if ('alive' === this.state) {
-      speed -= 0.15 * this.difficulty;
+      speed /= this.difficulty;
     } else if ('dead' === this.state) {
       speed /= Ghost.deadSpeedMod;
     }
@@ -148,7 +154,7 @@ class Ghost {
 }
 
 class Paku {
-  framesPerMove = 16;
+  framesPerMove = 14;
   location = 4;
   direction = 1;
   directionIntent = null;
@@ -156,8 +162,15 @@ class Paku {
   static intentToDir = { 'l': -1, 'r': 1 };
 
   update(frameNum, inputBuffer) {
-    if (null !== inputBuffer.direction) {
+    if (null !== inputBuffer.direction &&
+      !inputBuffer.override
+    ) {
       this.directionIntent = inputBuffer.direction;
+    } else if (inputBuffer.override) {
+      this.directionIntent = {
+        '-1': 'r',
+        '1': 'l'
+      }[this.direction];
     }
 
     if (0 === Math.floor(frameNum % this.framesPerMove)) {
@@ -261,7 +274,6 @@ class Game {
         }
       }
       this.setSpecialPip();
-      this.ghost.difficulty += 1;
     }
 
     return null;
@@ -316,6 +328,8 @@ class Preview {
   dir = 0;
   loggedInputDir = null;
 
+  framesPerMove = 2;
+
   animFrame = 0;
 
   static update = {
@@ -333,7 +347,9 @@ class Preview {
       this.loggedInputDir = inputBuffer.direction;
     }
 
-    if (0 === (frameNum % 5)) {
+    if (0 === (frameNum % this.framesPerMove) &&
+      null !== this.loggedInputDir
+    ) {
       this.dir += Preview.update[this.loggedInputDir] || 0;
       this.loggedInputDir = null;
     }
